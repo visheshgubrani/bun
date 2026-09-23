@@ -2,6 +2,7 @@ package schema
 
 import (
 	"database/sql/driver"
+	"encoding"
 	"fmt"
 	"net"
 	"reflect"
@@ -130,6 +131,14 @@ func appender(dialect Dialect, typ reflect.Type) AppenderFunc {
 		if ptr.Implements(driverValuerType) {
 			return addrAppender(appendDriverValue)
 		}
+	}
+
+	// The standard library uuid.UUID is detected by its exact type, after the
+	// custom appender interfaces above so that they keep taking precedence.
+	// *uuid.UUID is handled by the reflect.Pointer case below, which wraps
+	// this appender with PtrAppender.
+	if typ == internal.TypeUUID {
+		return appendUUIDText
 	}
 
 	switch kind {
@@ -277,6 +286,14 @@ func appendDriverValue(gen QueryGen, b []byte, v reflect.Value) []byte {
 		return dialect.AppendError(b, fmt.Errorf("driver.Valuer returns unsupported type %T", value))
 	}
 	return gen.Append(b, value)
+}
+
+func appendUUIDText(gen QueryGen, b []byte, v reflect.Value) []byte {
+	text, err := v.Interface().(encoding.TextAppender).AppendText(nil)
+	if err != nil {
+		return dialect.AppendError(b, err)
+	}
+	return gen.Dialect().AppendString(b, internal.String(text))
 }
 
 func addrAppender(fn AppenderFunc) AppenderFunc {

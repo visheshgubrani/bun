@@ -3,6 +3,8 @@ package schema
 import (
 	"database/sql/driver"
 	"reflect"
+
+	"github.com/uptrace/bun/internal"
 )
 
 var isZeroerType = reflect.TypeFor[isZeroer]()
@@ -56,6 +58,14 @@ type IsZeroerFunc func(reflect.Value) bool
 func zeroChecker(typ reflect.Type) IsZeroerFunc {
 	if typ.Implements(isZeroerType) {
 		return isZeroInterface
+	}
+
+	// The standard library uuid.UUID is a [16]byte array, and the byte array
+	// check below slices the value, which panics when it is not addressable.
+	// NullZero reaches this with a plain interface value, so check the bytes
+	// by index instead.
+	if typ == internal.TypeUUID {
+		return isZeroUUID
 	}
 
 	kind := typ.Kind()
@@ -145,6 +155,15 @@ func isZeroUint(v reflect.Value) bool {
 
 func isZeroFloat(v reflect.Value) bool {
 	return v.Float() == 0
+}
+
+func isZeroUUID(v reflect.Value) bool {
+	for i := 0; i < v.Len(); i++ {
+		if v.Index(i).Uint() != 0 {
+			return false
+		}
+	}
+	return true
 }
 
 func isZeroBytes(v reflect.Value) bool {
