@@ -2,7 +2,6 @@ package schema
 
 import (
 	"database/sql/driver"
-	"encoding"
 	"fmt"
 	"net"
 	"reflect"
@@ -286,14 +285,6 @@ func appendDriverValue(gen QueryGen, b []byte, v reflect.Value) []byte {
 		return dialect.AppendError(b, fmt.Errorf("driver.Valuer returns unsupported type %T", value))
 	}
 	return gen.Append(b, value)
-}
-
-func appendUUIDText(gen QueryGen, b []byte, v reflect.Value) []byte {
-	text, err := v.Interface().(encoding.TextAppender).AppendText(nil)
-	if err != nil {
-		return dialect.AppendError(b, err)
-	}
-	return gen.Dialect().AppendString(b, internal.String(text))
 }
 
 func addrAppender(fn AppenderFunc) AppenderFunc {

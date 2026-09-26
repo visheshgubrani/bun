@@ -502,7 +502,7 @@ func scanUUIDArrayValues(dest reflect.Value, p *arrayParser, elemType reflect.Ty
 			// UnmarshalText has a pointer receiver, so decode into an
 			// addressable value and take its address for a pointer element.
 			decoded := reflect.New(valueType)
-			if err := schema.ScanUUIDTextFunc(decoded.Elem(), elem); err != nil {
+			if err := schema.ScanUUIDText(decoded.Elem(), elem); err != nil {
 				return fmt.Errorf("scanElem failed: %w", err)
 			}
 

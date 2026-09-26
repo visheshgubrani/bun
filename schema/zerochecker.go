@@ -157,15 +157,6 @@ func isZeroFloat(v reflect.Value) bool {
 	return v.Float() == 0
 }
 
-func isZeroUUID(v reflect.Value) bool {
-	for i := 0; i < v.Len(); i++ {
-		if v.Index(i).Uint() != 0 {
-			return false
-		}
-	}
-	return true
-}
-
 func isZeroBytes(v reflect.Value) bool {
 	b := v.Slice(0, v.Len()).Bytes()
 	for _, c := range b {
